@@ -6,8 +6,6 @@
 ## Who it’s for
 **Primary Persona:** Individual banking users who regularly export Swiss bank CSV statements and want a clean, automated, and private view of their personal spending habits without relying on bloated, third-party budget apps.
 
----
-
 ## What it does
 
 ### 🔐 Authentication & Security
@@ -22,8 +20,6 @@
 ### 📊 Dashboard & Insights
 * **Core Metrics:** Instantly view essential metrics like *Total Out* (spending), daily *Burn Rate*, *Unassigned* transaction counts, and a detailed *Category Breakdown*.
 * **Interactive History:** Provides a highly searchable and category-filtered transaction history directly in the frontend.
-
----
 
 ## How it works (Repo-based Architecture)
 
