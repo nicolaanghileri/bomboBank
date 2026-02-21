@@ -1,10 +1,36 @@
+import os
+import jwt
+from jwt import InvalidTokenError
 from fastapi import APIRouter, UploadFile, File, HTTPException, Header
-import csv
-from io import StringIO
-from app.services.supabase import get_supabase_client, get_supabase_admin_client
-from app.services.transaction_parser import TransactionParser
+from app.services.supabase import get_supabase_client
+from transaction_parser import TransactionParser
 
 router = APIRouter()
+
+def _extract_token(authorization: str) -> str:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid authorization header. Use: Bearer <token>")
+    token = authorization[len("Bearer "):].strip()
+    if not token:
+        raise HTTPException(status_code=401, detail="Missing bearer token")
+    return token
+
+def _extract_user_id_from_token(token: str) -> str:
+    # Extract `sub` claim only; Supabase authorization is enforced separately
+    # when requests are executed with `client.postgrest.auth(access_token)`.
+    try:
+        payload = jwt.decode(
+            token,
+            options={"verify_signature": False, "verify_exp": False, "verify_aud": False},
+            algorithms=["HS256", "RS256", "ES256"],
+        )
+    except InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token format")
+
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Token does not contain user id")
+    return user_id
 
 @router.post("/bank-csv")
 async def upload_bank_csv(
@@ -15,50 +41,47 @@ async def upload_bank_csv(
     if not file.filename.endswith('.csv'):
         raise HTTPException(status_code=400, detail="Only .csv files allowed.")
 
-    # Extract token from "Bearer <token>"
-    try:
-        token = authorization.split("Bearer ")[1]
-    except:
-        raise HTTPException(status_code=401, detail="Invalid authorization header. Use: Bearer <token>")
+    token = _extract_token(authorization)
 
     try:
         content = await file.read()
-        content_str = content.decode('utf-8')
+        try:
+            content_str = content.decode('utf-8')
+        except UnicodeDecodeError:
+            content_str = content.decode('latin1')
     except UnicodeDecodeError:
-        raise HTTPException(status_code=400, detail="Error decoding file to utf-8")
+        raise HTTPException(status_code=400, detail="Error decoding file")
     
     try:
-        # Get user_id from token
-        supabase_admin = get_supabase_admin_client()
-        user_response = supabase_admin.auth.get_user(token)
-        user_id = user_response.user.id  # ← HIER kommt die user_id her!
+        # Extract user_id (JWT sub) locally to avoid extra network call.
+        user_id = _extract_user_id_from_token(token)
         
         # Get user's client (with RLS)
         supabase = get_supabase_client(token)
-        
-        csv_file = StringIO(content_str)
-        reader = csv.DictReader(csv_file, delimiter=';')
         
         # Load categories for mapping
         categories_response = supabase.table('categories').select('*').execute()
         categories_map = {cat['name']: cat['id'] for cat in categories_response.data}
         
+        # Use the same parser workflow that works in manual tests
+        parsed_from_csv = TransactionParser.parse_csv(content_str)
         parsed_transactions = []
         skipped = 0
         errors = []
         
-        # Parse each row
-        for row_num, row in enumerate(reader, start=2):
+        # Process parsed transactions
+        for row_num, parsed in enumerate(parsed_from_csv, start=2):
             try:
-                # Parse transaction
-                parsed = TransactionParser.parse_transaction(row)
-                
-                # Add user_id (NOW IT'S DEFINED!)
+                # Add user_id from token
                 parsed['user_id'] = user_id
                 
                 # Map category name to ID
-                category_name = parsed.pop('category_name')
-                parsed['category_id'] = categories_map.get(category_name)
+                category_name = parsed.pop('category_name', None)
+                parsed['category_id'] = (
+                    categories_map.get(category_name)
+                    or categories_map.get("Other")
+                    or categories_map.get("Others")
+                )
                 
                 # Check for duplicates
                 existing_response = (
@@ -87,6 +110,7 @@ async def upload_bank_csv(
             
             for i in range(0, len(parsed_transactions), batch_size):
                 batch = parsed_transactions[i:i + batch_size]
+                batch_start_row = i + 2
                 
                 try:
                     insert_response = (
@@ -97,16 +121,29 @@ async def upload_bank_csv(
                     inserted += len(insert_response.data)
                     
                 except Exception as e:
-                    raise HTTPException(
-                        status_code=500, 
-                        detail=f"Database insert failed: {str(e)}"
+                    # Continue import: retry this batch row-by-row and skip failing rows.
+                    errors.append(
+                        f"Batch starting at parsed row {batch_start_row} failed, retrying row-by-row: {str(e)}"
                     )
+                    for offset, row in enumerate(batch):
+                        row_num = batch_start_row + offset
+                        try:
+                            single_insert = (
+                                supabase.table('transactions')
+                                .insert(row)
+                                .execute()
+                            )
+                            if single_insert.data:
+                                inserted += 1
+                        except Exception as row_error:
+                            errors.append(f"Row {row_num}: insert failed: {str(row_error)}")
+                            continue
         
         return {
             "success": True,
             "message": f"Successfully imported {inserted} transactions",
             "summary": {
-                "total_in_file": len(parsed_transactions) + skipped,
+                "total_in_file": len(parsed_from_csv),
                 "inserted": inserted,
                 "duplicates_skipped": skipped,
                 "errors": errors if errors else None

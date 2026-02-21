@@ -1,0 +1,35 @@
+{
+  "Income": "gehalt|lohn|salaire|salary|bonus|versicherungsleistung|gutschrift|renten|ahv|iv|eo|erwerbsersatz|kinderzulage|familienzulage",
+  
+  "Education": "uni|eth|epfl|hochschule|schule|kurs|seminar|udemy|coursera|fernuni|studium|lehrgang|rechnung swissschule|schulmaterial|studiengebühr",
+  
+  "Subscriptions": "netflix|spotify|disney|apple.com|google storage|icloud|prime video|dazn|sky show|youtube premium|swisscom|sunrise|salt|wingo|yallo|upc|teleboy|quickline|nzz|tagesanzeiger|tamedia",
+  
+  "Transport": "sbb|cff|ffs|zvv|vbl|vbg|vbsl|mobility|fairtiq|parking|auto|tanken|shell|avanti|socar|agrola|bp|coop pronto|easyride|libero|ostwind|mobilis|unireso|z-pass|green-mobility|enbw|tesla supercharger|parkingpay",
+  
+  "Entertainment": "kino|cinema|ticketcorner|eventim|museum|zoo|kultur|concert|openair|arena|filmpalast|kitag|blue cinema|pathé",
+  
+  "Groceries": "migros|coop|denner|lidl|aldi|volg|manor food|globus|otto's|landiland|avec|spar|pam|puralpina|aligro|prodega|transgourmet|farmy|leshop|coop.ch",
+  
+  "Cash & ATM": "bargeld|atm|geldautomat|bancomat|postomat|cash withdrawal|bezug bankomat|kantonalbank bezug",
+  
+  "Restaurants & Takeout": "lieferservice|eat.ch|uber eats|just eat|mcdonalds|burger king|starbucks|dieci|brezelkönig|bakery|bäckerei|confiserie|restaurant|pizzeria|trattoria|bistro|kantine|mensa|subway|kebab|vito",
+  
+  "Insurance": "helsana|css|swica|assura|visana|sanitas|kpt|concordia|atupri|axa|allianz|mobiliar|zurich|vaudoise|generali|suva|group Mutuel|egk|progres|sansan|intras|arcosana|amavisit|sympany|ökk",
+  
+  "Savings & Investment": "depot|invest|vontobel|swissquote|revolut|crypto|coinbase|binance|viac|finpension|truewealth|yuh|selma|clerie|sparplan|aktien|fonds|etf|gold|goldvorsorge|pillar 3a|säule 3a",
+  
+  "Personal Care": "friseur|coiffeur|barber|rituals|lush|kosmetik|beauty|parfümerie|douglas|import parfumerie|müller|manor beauty",
+  
+  "Hobby & Leisure": "gym|fitness|puregym|basefit|activ fitness|migros fitnesspark|sport|verein|club|steam|playstation|xbox|nintendo|epic games|outdoor|bergzeit|mammut|transa|ochsner sport|sportxx",
+  
+  "Debt & Interest": "kredit|zinsen|interest|dettes|darlehen|hypothekarzins|amortisation|cembra|bank-now|bob finance",
+  
+  "Shopping": "amazon|zalando|h&m|zara|ikea|galaxus|digitec|microspot|brack|interdiscount|fust|media markt|decathlon|about you|shein|aliexpress|temu|landon|globus|manor|pfister|conforama",
+  
+  "Rent & Housing": "miete|loyer|rent|immobilien|verwaltung|wohnen|nebenkosten|heizkosten|parkplatzmiete|garagenmiete|wincasa|privera|livit",
+  
+  "Health": "apotheke|drogerie|zahnarzt|arzt|spital|hirslanden|inselspital|unispital|kantonsspital|physio|labormed|optiker|fielmann|visilab|lensvision",
+  
+  "Utilities": "serafe|billag|ewl|ckw|iwb|ewz|sig|gaznat|stadtwerke|wasserrechnung|kehricht|abfall|stromrechnung|heizung|antennen"
+}

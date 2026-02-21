@@ -49,7 +49,7 @@ app = FastAPI(title="bomboBank API", version="1.0.0")
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost"],
+    allow_origins=["http://localhost", "http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
