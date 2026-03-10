@@ -1,0 +1,201 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 3610 >>
+stream
+BT
+/F2 18.00 Tf
+1 0 0 1 42.00 746.00 Tm
+(bomboBank - One-Page App Summary) Tj
+ET
+BT
+/F2 11.40 Tf
+1 0 0 1 42.00 724.00 Tm
+(What it is) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 705.00 Tm
+(bomboBank is a web app that imports Swiss e-banking CSV exports and turns them into a personal finance) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 693.00 Tm
+(cockpit.) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 681.00 Tm
+(It combines CSV ingestion, transaction categorization, and dashboard views for day-to-day expense) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 669.00 Tm
+(insight.) Tj
+ET
+BT
+/F2 11.40 Tf
+1 0 0 1 42.00 657.00 Tm
+(Who it's for) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 638.00 Tm
+(Primary persona: individual banking users who export Swiss bank CSV statements and want a clean) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 626.00 Tm
+(personal spending view.) Tj
+ET
+BT
+/F2 11.40 Tf
+1 0 0 1 42.00 614.00 Tm
+(What it does) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 595.00 Tm
+(- Authenticates users with Supabase Auth \(sign up, sign in, sign out\).) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 583.00 Tm
+(- Uploads bank CSV files from the UI to a FastAPI endpoint with Bearer token auth.) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 571.00 Tm
+(- Parses multi-line CSV rows, normalizes fields, and assigns categories via regex mapping.) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 559.00 Tm
+(- Prevents duplicates by checking iban + booked_at + amount before insert.) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 547.00 Tm
+(- Inserts transactions in batches with row-level retry and error collection on failures.) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 535.00 Tm
+(- Shows dashboard metrics \(total out, burn rate, unassigned count, category breakdown\).) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 523.00 Tm
+(- Provides searchable, category-filtered transaction history in the frontend.) Tj
+ET
+BT
+/F2 11.40 Tf
+1 0 0 1 42.00 511.00 Tm
+(How it works \(repo-based architecture\)) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 492.00 Tm
+(- Frontend: React + Vite UI with Supabase client-side auth/session handling.) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 480.00 Tm
+(- API: FastAPI backend endpoint /api/upload/bank-csv for CSV ingestion.) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 468.00 Tm
+(- Data flow: Browser uploads CSV + JWT -> API decodes JWT sub -> parser transforms rows -> Supabase) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 456.00 Tm
+(insert.) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 444.00 Tm
+(- Storage: Supabase tables transactions and categories; category regex rules in backend/mapping.json.) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 432.00 Tm
+(- Note: PostgreSQL connection test in backend/main.py runs at startup \(separate from Supabase flow\).) Tj
+ET
+BT
+/F2 11.40 Tf
+1 0 0 1 42.00 420.00 Tm
+(How to run \(minimal\)) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 401.00 Tm
+(1. Backend env: set SUPABASE_URL and one publishable key \(e.g., SUPABASE_ANON_KEY\), plus DB vars used) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 389.00 Tm
+(in main.py.) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 377.00 Tm
+(2. Start backend: cd backend && python3 -m pip install -r requirements.txt && uvicorn main:app) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 365.00 Tm
+(--reload --port 8000) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 353.00 Tm
+(3. Frontend env: set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_DEFAULT_KEY.) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 341.00 Tm
+(4. Start frontend: cd frontend/bomboBank-ui && npm install && npm run dev) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 329.00 Tm
+(5. Open the UI \(default Vite URL\), register/login, then upload a bank CSV file.) Tj
+ET
+BT
+/F1 9.60 Tf
+1 0 0 1 44.00 317.00 Tm
+(6. DB schema/migration and category seed commands: Not found in repo.) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+6 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000257 00000 n 
+0000003919 00000 n 
+0000003989 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+4064
+%%EOF
