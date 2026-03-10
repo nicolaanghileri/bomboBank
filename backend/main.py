@@ -1,55 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import upload
-
-import psycopg2
-from dotenv import load_dotenv
 import os
-
-# Load environment variables from .env
-load_dotenv()
-
-# Fetch variables
-USER = os.getenv("user")
-PASSWORD = os.getenv("password")
-HOST = os.getenv("host")
-PORT = os.getenv("port")
-DBNAME = os.getenv("dbname")
-
-# Connect to the database
-try:
-    connection = psycopg2.connect(
-        user=USER,
-        password=PASSWORD,
-        host=HOST,
-        port=PORT,
-        dbname=DBNAME
-    )
-    print("Connection successful!")
-    
-    # Create a cursor to execute SQL queries
-    cursor = connection.cursor()
-    
-    # Example query
-    cursor.execute("SELECT NOW();")
-    result = cursor.fetchone()
-    print("Current Time:", result)
-
-    # Close the cursor and connection
-    cursor.close()
-    connection.close()
-    print("Connection closed.")
-
-except Exception as e:
-    print(f"Failed to connect: {e}")
-
 
 app = FastAPI(title="bomboBank API", version="1.0.0")
 
-# CORS
+# CORS — configurable via ALLOWED_ORIGINS env var (comma-separated)
+_raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173")
+allowed_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost", "http://localhost:5173", "https://bomboBank.anghileri.ch"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -60,6 +22,10 @@ app.include_router(upload.router, prefix="/api/upload", tags=["upload"])
 @app.get("/")
 def root():
     return {"message": "bomboBank API läuft! 🚀"}
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 
 
