@@ -70,8 +70,9 @@ export function UploadPage() {
             const { data: { session } } = await supabase.auth.getSession()
             const token = session?.access_token ?? ""
 
+            const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000"
             const response = await fetch(
-                "http://localhost:8000/api/upload/bank-csv",
+                `${apiBase}/api/upload/bank-csv`,
                 {
                     method: "POST",
                     headers: {
