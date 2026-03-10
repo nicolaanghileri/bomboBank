@@ -3,19 +3,24 @@ import { useAuth } from "@/contexts/AuthContext"
 import { Sidebar } from "@/components/Sidebar"
 import { Header } from "@/components/Header"
 import { Dashboard } from "@/components/Dashboard"
+import { SpendingPage } from "@/components/SpendingPage"
 import { TransactionsPage } from "@/components/TransactionsPage"
 import { UploadPage } from "@/components/UploadPage"
 import { LoginPage } from "@/components/LoginPage"
 import { RegisterPage } from "@/components/RegisterPage"
 import { Loader2 } from "lucide-react"
 
-type AppPage = "dashboard" | "transactions" | "upload"
+type AppPage = "dashboard" | "spending" | "transactions" | "upload"
 type AuthPage = "login" | "register"
 
 const pageConfig: Record<AppPage, { title: string; description: string }> = {
   dashboard: {
     title: "Dashboard",
     description: "Your financial overview at a glance",
+  },
+  spending: {
+    title: "Spending",
+    description: "Deep dive into your spending patterns",
   },
   transactions: {
     title: "Transactions",
@@ -69,6 +74,7 @@ function App() {
 
         <main className="flex-1">
           {currentPage === "dashboard" && <Dashboard />}
+          {currentPage === "spending" && <SpendingPage />}
           {currentPage === "transactions" && <TransactionsPage />}
           {currentPage === "upload" && <UploadPage />}
         </main>

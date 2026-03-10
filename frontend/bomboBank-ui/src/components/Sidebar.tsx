@@ -7,9 +7,10 @@ import {
     Upload,
     LogOut,
     Landmark,
+    PieChart,
 } from "lucide-react"
 
-type Page = "dashboard" | "transactions" | "upload"
+type Page = "dashboard" | "spending" | "transactions" | "upload"
 
 interface SidebarProps {
     currentPage: Page
@@ -23,6 +24,11 @@ const navItems: { page: Page; label: string; icon: React.ReactNode }[] = [
         page: "dashboard",
         label: "Dashboard",
         icon: <LayoutDashboard className="size-4" />,
+    },
+    {
+        page: "spending",
+        label: "Spending",
+        icon: <PieChart className="size-4" />,
     },
     {
         page: "transactions",

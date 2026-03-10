@@ -61,7 +61,15 @@ async def upload_bank_csv(
         
         # Load categories for mapping
         categories_response = supabase.table('categories').select('*').execute()
-        categories_map = {cat['name']: cat['id'] for cat in categories_response.data}
+        categories_map = {
+            cat['name'].strip().lower(): cat['id']
+            for cat in categories_response.data
+            if cat.get('name') and cat.get('id')
+        }
+        fallback_category_id = (
+            categories_map.get("other")
+            or categories_map.get("others")
+        )
         
         # Use the same parser workflow that works in manual tests
         parsed_from_csv = TransactionParser.parse_csv(content_str)
@@ -77,21 +85,39 @@ async def upload_bank_csv(
                 
                 # Map category name to ID
                 category_name = parsed.pop('category_name', None)
-                parsed['category_id'] = (
-                    categories_map.get(category_name)
-                    or categories_map.get("Other")
-                    or categories_map.get("Others")
-                )
+                category_key = category_name.strip().lower() if isinstance(category_name, str) else None
+                parsed['category_id'] = categories_map.get(category_key) if category_key else fallback_category_id
+
+                # Keep only columns that exist in the `transactions` table.
+                allowed_columns = {
+                    'user_id',
+                    'category_id',
+                    'amount',
+                    'currency',
+                    'booked_at',
+                    'description',
+                    'purpose',
+                    'iban',
+                    'import_hash',
+                    'merchant',
+                    'raw_text',
+                }
+                parsed = {k: v for k, v in parsed.items() if k in allowed_columns}
+                
+                required_fields = ('amount', 'booked_at', 'import_hash')
+                for field in required_fields:
+                    if parsed.get(field) in (None, ''):
+                        raise ValueError(f"Missing required field '{field}'")
                 
                 # Check for duplicates
-                existing_response = (
+                existing_query = (
                     supabase.table('transactions')
                     .select('id')
-                    .eq('iban', parsed['iban'])
-                    .eq('booked_at', parsed['booked_at'])
-                    .eq('amount', parsed['amount'])
-                    .execute()
+                    .eq('user_id', user_id)
+                    .eq('import_hash', parsed['import_hash'])
+                    .limit(1)
                 )
+                existing_response = existing_query.execute()
                 
                 if existing_response.data:
                     skipped += 1
