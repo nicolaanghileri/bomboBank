@@ -5,9 +5,11 @@ import os
 
 app = FastAPI(title="bomboBank API", version="1.0.0")
 
-# CORS — configurable via ALLOWED_ORIGINS env var (comma-separated)
-_raw_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173")
-allowed_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()]
+_raw_origins = os.getenv("ALLOWED_ORIGINS", "")
+allowed_origins = [o.strip() for o in _raw_origins.split(",") if o.strip()] or [
+    "http://localhost:5173",
+    "https://bombobank.anghileri.ch",
+]
 
 app.add_middleware(
     CORSMiddleware,
