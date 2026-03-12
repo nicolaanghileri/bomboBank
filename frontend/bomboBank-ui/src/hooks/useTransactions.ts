@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import supabase from "@/utils/supabase"
+import { useAuth } from "@/contexts/AuthContext"
 import type { DbTransaction, DbCategory } from "@/lib/types"
 
 interface UseTransactionsOptions {
@@ -20,12 +21,15 @@ interface UseTransactionsResult {
 export function useTransactions(
     options?: UseTransactionsOptions
 ): UseTransactionsResult {
+    const { user } = useAuth()
     const [transactions, setTransactions] = useState<DbTransaction[]>([])
     const [categories, setCategories] = useState<DbCategory[]>([])
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
 
     async function fetchAll() {
+        if (!user) return
+
         setLoading(true)
         setError(null)
 
@@ -34,6 +38,7 @@ export function useTransactions(
             let query = supabase
                 .from("transactions")
                 .select("*, categories(name, icon, color)")
+                .eq("user_id", user.id)
                 .order("booked_at", { ascending: false })
 
             // Apply date-range filters when provided
@@ -52,6 +57,7 @@ export function useTransactions(
             const { data: catData, error: catError } = await supabase
                 .from("categories")
                 .select("*")
+                .eq("user_id", user.id)
                 .order("name")
 
             if (catError) throw catError
@@ -69,7 +75,7 @@ export function useTransactions(
 
     useEffect(() => {
         fetchAll()
-    }, [options?.startDate, options?.endDate])
+    }, [options?.startDate, options?.endDate, user?.id])
 
     return { transactions, categories, loading, error, refetch: fetchAll }
 }
