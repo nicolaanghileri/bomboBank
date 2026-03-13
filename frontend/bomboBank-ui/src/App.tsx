@@ -6,11 +6,12 @@ import { Dashboard } from "@/components/Dashboard"
 import { SpendingPage } from "@/components/SpendingPage"
 import { TransactionsPage } from "@/components/TransactionsPage"
 import { UploadPage } from "@/components/UploadPage"
+import { RecurringPage } from "@/components/RecurringPage"
 import { LoginPage } from "@/components/LoginPage"
 import { RegisterPage } from "@/components/RegisterPage"
 import { Loader2 } from "lucide-react"
 
-type AppPage = "dashboard" | "spending" | "transactions" | "upload"
+type AppPage = "dashboard" | "spending" | "transactions" | "recurring" | "upload"
 type AuthPage = "login" | "register"
 
 const pageConfig: Record<AppPage, { title: string; description: string }> = {
@@ -25,6 +26,10 @@ const pageConfig: Record<AppPage, { title: string; description: string }> = {
   transactions: {
     title: "Transactions",
     description: "Browse and filter all your transactions",
+  },
+  recurring: {
+    title: "Recurring",
+    description: "Subscriptions and payments that repeat every month",
   },
   upload: {
     title: "Upload",
@@ -76,6 +81,7 @@ function App() {
           {currentPage === "dashboard" && <Dashboard />}
           {currentPage === "spending" && <SpendingPage />}
           {currentPage === "transactions" && <TransactionsPage />}
+          {currentPage === "recurring" && <RecurringPage />}
           {currentPage === "upload" && <UploadPage />}
         </main>
       </div>

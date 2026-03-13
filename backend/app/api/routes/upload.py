@@ -1,7 +1,7 @@
 import os
 import jwt
 from jwt import InvalidTokenError
-from fastapi import APIRouter, UploadFile, File, HTTPException, Header
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Header
 from app.services.supabase import get_supabase_client
 from transaction_parser import TransactionParser
 
@@ -35,11 +35,19 @@ def _extract_user_id_from_token(token: str) -> str:
 @router.post("/bank-csv")
 async def upload_bank_csv(
     file: UploadFile = File(...),
-    authorization: str = Header(...)  # ← Bearer Token kommt hier rein
+    bank_type: str = Form("migros_bank"),  # migros_bank | raiffeisen | ubs
+    authorization: str = Header(...)
 ):
     
     if not file.filename.endswith('.csv'):
         raise HTTPException(status_code=400, detail="Only .csv files allowed.")
+
+    valid_bank_types = {"migros_bank", "raiffeisen", "ubs"}
+    if bank_type not in valid_bank_types:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown bank_type '{bank_type}'. Must be one of: {', '.join(sorted(valid_bank_types))}"
+        )
 
     token = _extract_token(authorization)
 
@@ -72,7 +80,7 @@ async def upload_bank_csv(
         )
         
         # Use the same parser workflow that works in manual tests
-        parsed_from_csv = TransactionParser.parse_csv(content_str)
+        parsed_from_csv = TransactionParser.parse_csv(content_str, bank_type=bank_type)
         parsed_transactions = []
         skipped = 0
         errors = []
@@ -168,6 +176,7 @@ async def upload_bank_csv(
         return {
             "success": True,
             "message": f"Successfully imported {inserted} transactions",
+            "bank_type": bank_type,
             "summary": {
                 "total_in_file": len(parsed_from_csv),
                 "inserted": inserted,

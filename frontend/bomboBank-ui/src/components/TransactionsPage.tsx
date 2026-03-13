@@ -13,7 +13,7 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { useTransactions } from "@/hooks/useTransactions"
-import { getCategoryName, formatCHF } from "@/lib/types"
+import { getCategoryName, getCategoryColor, formatCHF } from "@/lib/types"
 import {
     Search,
     AlertCircle,
@@ -26,6 +26,13 @@ import {
     ArrowDown,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { MerchantLogo } from "@/lib/merchantLogo"
+
+function formatDate(dateStr: string): string {
+    const [y, m, d] = dateStr.slice(0, 10).split("-")
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+    return `${d} ${months[parseInt(m, 10) - 1]} ${y.slice(2)}`
+}
 
 /** Get the first and last day of a given month (ISO date strings). */
 function getMonthRange(year: number, month: number) {
@@ -329,39 +336,31 @@ export function TransactionsPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead
-                                        className="w-[120px] cursor-pointer select-none"
-                                        onClick={() =>
-                                            toggleSort("booked_at")
-                                        }
+                                        className="w-[100px] cursor-pointer select-none"
+                                        onClick={() => toggleSort("booked_at")}
                                     >
-                                        Date
-                                        <SortIcon field="booked_at" />
+                                        Date <SortIcon field="booked_at" />
+                                    </TableHead>
+                                    <TableHead
+                                        className="w-[200px] cursor-pointer select-none"
+                                        onClick={() => toggleSort("merchant")}
+                                    >
+                                        Merchant <SortIcon field="merchant" />
                                     </TableHead>
                                     <TableHead
                                         className="cursor-pointer select-none"
-                                        onClick={() =>
-                                            toggleSort("description")
-                                        }
+                                        onClick={() => toggleSort("description")}
                                     >
-                                        Description
-                                        <SortIcon field="description" />
+                                        Description <SortIcon field="description" />
                                     </TableHead>
-                                    <TableHead
-                                        className="cursor-pointer select-none"
-                                        onClick={() =>
-                                            toggleSort("merchant")
-                                        }
-                                    >
-                                        Merchant
-                                        <SortIcon field="merchant" />
+                                    <TableHead className="w-[130px]">
+                                        Category
                                     </TableHead>
-                                    <TableHead>Category</TableHead>
                                     <TableHead
                                         className="w-[130px] cursor-pointer select-none text-right"
                                         onClick={() => toggleSort("amount")}
                                     >
-                                        Amount
-                                        <SortIcon field="amount" />
+                                        Amount <SortIcon field="amount" />
                                     </TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -376,41 +375,51 @@ export function TransactionsPage() {
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    filtered.map((tx) => (
-                                        <TableRow key={tx.id}>
-                                            <TableCell className="text-muted-foreground tabular-nums">
-                                                {tx.booked_at}
-                                            </TableCell>
-                                            <TableCell className="max-w-[250px] truncate font-medium">
-                                                {tx.description ?? "—"}
-                                            </TableCell>
-                                            <TableCell className="max-w-[160px] truncate text-muted-foreground">
-                                                {tx.merchant ?? "—"}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge
-                                                    variant="secondary"
-                                                    className="font-normal"
-                                                >
-                                                    {getCategoryName(tx)}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right tabular-nums font-medium">
-                                                <span
-                                                    className={
-                                                        tx.amount > 0
-                                                            ? "text-foreground"
-                                                            : "text-muted-foreground"
-                                                    }
-                                                >
-                                                    {tx.amount > 0
-                                                        ? "+"
-                                                        : ""}
-                                                    {formatCHF(tx.amount)}
-                                                </span>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
+                                    filtered.map((tx) => {
+                                        const catColor = getCategoryColor(tx)
+                                        return (
+                                            <TableRow key={tx.id}>
+                                                {/* Date */}
+                                                <TableCell className="tabular-nums text-muted-foreground">
+                                                    {formatDate(tx.booked_at)}
+                                                </TableCell>
+
+                                                {/* Merchant logo + name */}
+                                                <TableCell>
+                                                    <div className="flex items-center gap-2.5">
+                                                        <MerchantLogo merchant={tx.merchant} />
+                                                        <span className="truncate font-medium">
+                                                            {tx.merchant ?? "—"}
+                                                        </span>
+                                                    </div>
+                                                </TableCell>
+
+                                                {/* Description */}
+                                                <TableCell className="max-w-[260px] truncate text-sm text-muted-foreground">
+                                                    {tx.description ?? "—"}
+                                                </TableCell>
+
+                                                {/* Category */}
+                                                <TableCell>
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="font-normal"
+                                                        style={catColor ? { borderColor: catColor, color: catColor } : undefined}
+                                                    >
+                                                        {getCategoryName(tx)}
+                                                    </Badge>
+                                                </TableCell>
+
+                                                {/* Amount */}
+                                                <TableCell className="text-right tabular-nums font-semibold">
+                                                    <span className={tx.amount > 0 ? "text-emerald-600" : "text-foreground"}>
+                                                        {tx.amount > 0 ? "+" : ""}
+                                                        {formatCHF(tx.amount)}
+                                                    </span>
+                                                </TableCell>
+                                            </TableRow>
+                                        )
+                                    })
                                 )}
                             </TableBody>
                         </Table>

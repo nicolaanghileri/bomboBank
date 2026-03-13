@@ -8,9 +8,10 @@ import {
     LogOut,
     Landmark,
     PieChart,
+    RefreshCw,
 } from "lucide-react"
 
-type Page = "dashboard" | "spending" | "transactions" | "upload"
+type Page = "dashboard" | "spending" | "transactions" | "recurring" | "upload"
 
 interface SidebarProps {
     currentPage: Page
@@ -34,6 +35,11 @@ const navItems: { page: Page; label: string; icon: React.ReactNode }[] = [
         page: "transactions",
         label: "Transactions",
         icon: <ArrowUpDown className="size-4" />,
+    },
+    {
+        page: "recurring",
+        label: "Recurring",
+        icon: <RefreshCw className="size-4" />,
     },
     {
         page: "upload",

@@ -12,12 +12,13 @@ import {
 import {
     TrendingDown,
     TrendingUp,
-    Sigma,
-    Timer,
     AlertCircle,
     CircleDashed,
     RotateCcw,
+    Dices,
+    Trophy,
 } from "lucide-react"
+import { MerchantLogo } from "@/lib/merchantLogo"
 import {
     ResponsiveContainer,
     LineChart,
@@ -31,6 +32,16 @@ import {
     ReferenceLine,
     Cell,
 } from "recharts"
+
+/* ── Median helper ───────────────────────────────────────────── */
+function median(values: number[]): number {
+    if (values.length === 0) return 0
+    const sorted = [...values].sort((a, b) => a - b)
+    const mid = Math.floor(sorted.length / 2)
+    return sorted.length % 2 === 0
+        ? (sorted[mid - 1] + sorted[mid]) / 2
+        : sorted[mid]
+}
 
 /* ── Default range: last 12 months ──────────────────────────── */
 function defaultRange() {
@@ -91,6 +102,73 @@ export function Dashboard() {
         [transactions]
     )
 
+    /* ── Casino transactions ──────────────────────────────────── */
+    const casinoData = useMemo(() => {
+        const isCasino = (t: (typeof transactions)[0]) =>
+            [t.description, t.purpose, t.merchant, t.raw_text].some((f) =>
+                f?.toLowerCase().includes("casino")
+            )
+
+        const casinoTxs = transactions.filter(isCasino)
+
+        // Group by month label (same shape as monthlyData)
+        const byMonth: Record<string, number> = {}
+        for (const t of casinoTxs) {
+            const d = new Date(t.booked_at)
+            const label = d.toLocaleString("default", {
+                month: "short",
+                year: "2-digit",
+            })
+            byMonth[label] = (byMonth[label] ?? 0) + Math.abs(t.amount)
+        }
+
+        const monthly = Object.entries(byMonth)
+            .map(([label, total]) => ({ label, total }))
+            .sort((a, b) => {
+                // keep chronological order from monthlyData labels
+                const ai = monthlyData.findIndex((m) => m.label === a.label)
+                const bi = monthlyData.findIndex((m) => m.label === b.label)
+                return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi)
+            })
+
+        const totalSpent = casinoTxs.reduce(
+            (s, t) => s + Math.abs(t.amount),
+            0
+        )
+        const count = casinoTxs.length
+        const avgPerVisit = count > 0 ? totalSpent / count : 0
+        const worstMonth =
+            monthly.length > 0
+                ? monthly.reduce((a, b) => (a.total > b.total ? a : b))
+                : null
+
+        return { monthly, totalSpent, count, avgPerVisit, worstMonth }
+    }, [transactions, monthlyData])
+
+    /* ── Top 10 merchants ─────────────────────────────────────── */
+    const topMerchants = useMemo(() => {
+        const map = new Map<string, number[]>()
+        for (const tx of transactions) {
+            if (tx.amount >= 0) continue
+            const name =
+                tx.merchant?.trim() || tx.description?.trim() || "Unknown"
+            const arr = map.get(name) ?? []
+            arr.push(Math.abs(tx.amount))
+            map.set(name, arr)
+        }
+        const rows = [...map.entries()]
+            .map(([name, amounts]) => ({
+                name,
+                total: amounts.reduce((s, a) => s + a, 0),
+                median: median(amounts),
+                count: amounts.length,
+            }))
+            .sort((a, b) => b.total - a.total)
+            .slice(0, 10)
+        const max = rows[0]?.total ?? 1
+        return rows.map((r) => ({ ...r, pct: (r.total / max) * 100 }))
+    }, [transactions])
+
     const isDefault =
         startDate === defaults.startDate && endDate === defaults.endDate
 
@@ -104,8 +182,8 @@ export function Dashboard() {
         return (
             <div className="space-y-8 p-8">
                 <Skeleton className="h-9 w-72" />
-                <div className="grid gap-4 sm:grid-cols-4">
-                    {[...Array(4)].map((_, i) => (
+                <div className="grid gap-4 sm:grid-cols-2">
+                    {[...Array(2)].map((_, i) => (
                         <Card key={i}>
                             <CardHeader className="pb-2">
                                 <Skeleton className="h-4 w-24" />
@@ -139,13 +217,6 @@ export function Dashboard() {
     }
 
     /* ── KPI values ───────────────────────────────────────────── */
-    const runwayLabel =
-        summary.runway === Infinity
-            ? "∞"
-            : summary.runway < 0
-              ? "—"
-              : `${summary.runway.toFixed(1)} mo`
-
     const kpiCards = [
         {
             title: "Income",
@@ -158,21 +229,6 @@ export function Dashboard() {
             value: formatCHF(summary.totalOut),
             icon: <TrendingDown className="size-4" />,
             color: "text-rose-600 dark:text-rose-400",
-        },
-        {
-            title: "Net",
-            value: formatCHF(summary.net),
-            icon: <Sigma className="size-4" />,
-            color:
-                summary.net >= 0
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-rose-600 dark:text-rose-400",
-        },
-        {
-            title: "Runway",
-            value: runwayLabel,
-            icon: <Timer className="size-4" />,
-            color: "text-blue-600 dark:text-blue-400",
         },
     ]
 
@@ -234,7 +290,7 @@ export function Dashboard() {
             ) : (
                 <>
                     {/* ─── KPI Cards ──────────────────────────────────── */}
-                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="grid gap-4 sm:grid-cols-2">
                         {kpiCards.map((kpi) => (
                             <Card key={kpi.title}>
                                 <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -255,6 +311,75 @@ export function Dashboard() {
                             </Card>
                         ))}
                     </div>
+
+                    {/* ─── Top 10 Merchants ────────────────────────────── */}
+                    {topMerchants.length > 0 && (
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                <div className="flex items-center gap-2">
+                                    <Trophy className="size-4 text-muted-foreground" />
+                                    <CardTitle className="text-base">
+                                        Top Merchants
+                                    </CardTitle>
+                                </div>
+                                <span className="text-xs text-muted-foreground">
+                                    by total spend · selected period
+                                </span>
+                            </CardHeader>
+                            <CardContent className="px-0">
+                                <div className="divide-y">
+                                    {topMerchants.map((m, i) => (
+                                        <div
+                                            key={m.name}
+                                            className="flex items-center gap-4 px-6 py-3"
+                                        >
+                                            {/* Rank */}
+                                            <span className="w-5 flex-shrink-0 text-right text-xs font-medium text-muted-foreground">
+                                                {i + 1}
+                                            </span>
+
+                                            {/* Logo + name */}
+                                            <div className="flex min-w-0 flex-1 items-center gap-3">
+                                                <MerchantLogo merchant={m.name} size="md" />
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="truncate text-sm font-medium">
+                                                        {m.name}
+                                                    </p>
+                                                    {/* Progress bar */}
+                                                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                                                        <div
+                                                            className="h-full rounded-full bg-foreground/70 transition-all"
+                                                            style={{ width: `${m.pct}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Stats */}
+                                            <div className="flex flex-shrink-0 items-center gap-6 text-right">
+                                                <div>
+                                                    <p className="text-[10px] text-muted-foreground">
+                                                        Median
+                                                    </p>
+                                                    <p className="text-sm tabular-nums">
+                                                        {formatCHF(m.median)}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-[10px] text-muted-foreground">
+                                                        {m.count} payment{m.count !== 1 ? "s" : ""}
+                                                    </p>
+                                                    <p className="text-sm font-semibold tabular-nums">
+                                                        {formatCHF(m.total)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
 
                     {/* ─── Balance Over Time (Line Chart) ─────────────── */}
                     <Card>
@@ -297,7 +422,7 @@ export function Dashboard() {
                                     <Line
                                         type="monotone"
                                         dataKey="cumulativeBalance"
-                                        stroke="hsl(var(--chart-1, 220 70% 50%))"
+                                        stroke="var(--chart-1)"
                                         strokeWidth={2.5}
                                         dot={false}
                                         activeDot={{ r: 5 }}
@@ -365,6 +490,111 @@ export function Dashboard() {
                             </ResponsiveContainer>
                         </CardContent>
                     </Card>
+                    {/* ─── Casino Spending Overview ────────────────────── */}
+                    {casinoData.count > 0 && (
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between pb-2">
+                                <div className="flex items-center gap-2">
+                                    <Dices className="size-4 text-amber-500" />
+                                    <CardTitle className="text-base">
+                                        Casino Spending
+                                    </CardTitle>
+                                </div>
+                                <span className="text-xs text-muted-foreground">
+                                    {casinoData.count}{" "}
+                                    {casinoData.count === 1 ? "transaction" : "transactions"}
+                                </span>
+                            </CardHeader>
+                            <CardContent className="space-y-6">
+                                {/* KPI row */}
+                                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                                    {[
+                                        {
+                                            label: "Total Spent",
+                                            value: formatCHF(casinoData.totalSpent),
+                                        },
+                                        {
+                                            label: "Avg per Visit",
+                                            value: formatCHF(casinoData.avgPerVisit),
+                                        },
+                                        {
+                                            label: "Worst Month",
+                                            value: casinoData.worstMonth
+                                                ? formatCHF(casinoData.worstMonth.total)
+                                                : "—",
+                                        },
+                                        {
+                                            label: "% of Expenses",
+                                            value:
+                                                summary.totalOut > 0
+                                                    ? `${((casinoData.totalSpent / summary.totalOut) * 100).toFixed(1)}%`
+                                                    : "—",
+                                        },
+                                    ].map((kpi) => (
+                                        <div key={kpi.label}>
+                                            <p className="text-xs font-medium text-muted-foreground">
+                                                {kpi.label}
+                                            </p>
+                                            <p className="mt-1 text-xl font-bold tabular-nums text-amber-500">
+                                                {kpi.value}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Bar chart */}
+                                {casinoData.monthly.length > 1 && (
+                                    <ResponsiveContainer width="100%" height={200}>
+                                        <BarChart
+                                            data={casinoData.monthly}
+                                            margin={{ top: 4, right: 4, left: 0, bottom: 0 }}
+                                        >
+                                            <CartesianGrid
+                                                strokeDasharray="3 3"
+                                                className="stroke-muted"
+                                            />
+                                            <XAxis
+                                                dataKey="label"
+                                                tick={{ fontSize: 12 }}
+                                                className="fill-muted-foreground"
+                                            />
+                                            <YAxis
+                                                tick={{ fontSize: 12 }}
+                                                className="fill-muted-foreground"
+                                                tickFormatter={(v: number) =>
+                                                    v >= 1000
+                                                        ? `${(v / 1000).toFixed(0)}k`
+                                                        : String(v)
+                                                }
+                                            />
+                                            <Tooltip
+                                                content={
+                                                    <ChartTooltip valueLabel="Spent" />
+                                                }
+                                            />
+                                            <Bar
+                                                dataKey="total"
+                                                radius={[4, 4, 0, 0]}
+                                                maxBarSize={48}
+                                            >
+                                                {casinoData.monthly.map((entry, idx) => (
+                                                    <Cell
+                                                        key={idx}
+                                                        fill={
+                                                            entry.label === casinoData.worstMonth?.label
+                                                                ? "hsl(38 90% 52%)"
+                                                                : "hsl(38 70% 65%)"
+                                                        }
+                                                    />
+                                                ))}
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                )}
+                            </CardContent>
+                        </Card>
+                    )}
+
                 </>
             )}
         </div>

@@ -203,6 +203,94 @@ export function getMonthlyAggregates(
     })
 }
 
+// ── Recurring payments detection ─────────────────────────────
+
+export interface RecurringPayment {
+    /** Unique key: normalised description + "|" + amount */
+    key: string
+    /** Original description string */
+    description: string
+    /** Amount per occurrence (always negative – expense) */
+    amount: number
+    /** Sorted YYYY-MM strings of every month the payment appeared */
+    months: string[]
+    /** Sum of Math.abs(amount) across all occurrences */
+    totalPaid: number
+    category: string | null
+    categoryColor: string | null
+    /** ISO date of the most recent occurrence */
+    latestDate: string
+}
+
+export function getRecurringPayments(data: DbTransaction[]): RecurringPayment[] {
+    const map = new Map<
+        string,
+        {
+            description: string
+            amount: number
+            months: Set<string>
+            totalPaid: number
+            category: string | null
+            categoryColor: string | null
+            latestDate: string
+        }
+    >()
+
+    for (const tx of data) {
+        if (tx.amount >= 0) continue // expenses only
+
+        const rawDesc =
+            tx.description?.trim() ||
+            tx.purpose?.trim() ||
+            tx.merchant?.trim() ||
+            "Unknown"
+        const norm = rawDesc.toLowerCase().replace(/\s+/g, " ")
+        // Round to 2 dp so floating-point noise doesn't create duplicate keys
+        const amt = Math.round(tx.amount * 100) / 100
+        const key = `${norm}|${amt}`
+        const month = tx.booked_at.slice(0, 7) // YYYY-MM
+
+        const entry = map.get(key)
+        if (entry) {
+            entry.months.add(month)
+            entry.totalPaid += Math.abs(tx.amount)
+            if (tx.booked_at > entry.latestDate) entry.latestDate = tx.booked_at
+        } else {
+            const catName = getCategoryName(tx)
+            map.set(key, {
+                description: rawDesc,
+                amount: amt,
+                months: new Set([month]),
+                totalPaid: Math.abs(tx.amount),
+                category: catName !== "Unassigned" ? catName : null,
+                categoryColor: getCategoryColor(tx),
+                latestDate: tx.booked_at,
+            })
+        }
+    }
+
+    const result: RecurringPayment[] = []
+    for (const [key, entry] of map.entries()) {
+        if (entry.months.size >= 2) {
+            result.push({
+                key,
+                description: entry.description,
+                amount: entry.amount,
+                months: [...entry.months].sort(),
+                totalPaid: entry.totalPaid,
+                category: entry.category,
+                categoryColor: entry.categoryColor,
+                latestDate: entry.latestDate,
+            })
+        }
+    }
+
+    // Most-recurring first, then by highest total paid
+    return result.sort(
+        (a, b) => b.months.length - a.months.length || b.totalPaid - a.totalPaid
+    )
+}
+
 // ── Merchant stats (for Spending page) ──────────────────────
 
 export interface MerchantStat {
