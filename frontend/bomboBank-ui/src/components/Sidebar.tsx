@@ -9,9 +9,10 @@ import {
     Landmark,
     PieChart,
     RefreshCw,
+    Receipt,
 } from "lucide-react"
 
-type Page = "dashboard" | "spending" | "transactions" | "recurring" | "upload"
+type Page = "dashboard" | "spending" | "transactions" | "recurring" | "upload" | "tax"
 
 interface SidebarProps {
     currentPage: Page
@@ -45,6 +46,11 @@ const navItems: { page: Page; label: string; icon: React.ReactNode }[] = [
         page: "upload",
         label: "Upload",
         icon: <Upload className="size-4" />,
+    },
+    {
+        page: "tax",
+        label: "Steuerabzüge",
+        icon: <Receipt className="size-4" />,
     },
 ]
 
