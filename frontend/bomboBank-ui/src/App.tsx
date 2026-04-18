@@ -8,11 +8,12 @@ import { TransactionsPage } from "@/components/TransactionsPage"
 import { UploadPage } from "@/components/UploadPage"
 import { RecurringPage } from "@/components/RecurringPage"
 import { TaxDeductionsPage } from "@/components/TaxDeductionsPage"
+import { ProfilePage } from "@/components/ProfilePage"
 import { LoginPage } from "@/components/LoginPage"
 import { RegisterPage } from "@/components/RegisterPage"
 import { Loader2 } from "lucide-react"
 
-type AppPage = "dashboard" | "spending" | "transactions" | "recurring" | "upload" | "tax"
+type AppPage = "dashboard" | "spending" | "transactions" | "recurring" | "upload" | "tax" | "profile"
 type AuthPage = "login" | "register"
 
 const pageConfig: Record<AppPage, { title: string; description: string }> = {
@@ -39,6 +40,10 @@ const pageConfig: Record<AppPage, { title: string; description: string }> = {
   tax: {
     title: "Steuerabzüge",
     description: "Mögliche Steuerabzüge basierend auf deinen Transaktionen",
+  },
+  profile: {
+    title: "Profil",
+    description: "Persönliche Einstellungen und Kanton",
   },
 }
 
@@ -89,6 +94,7 @@ function App() {
           {currentPage === "recurring" && <RecurringPage />}
           {currentPage === "upload" && <UploadPage />}
           {currentPage === "tax" && <TaxDeductionsPage />}
+          {currentPage === "profile" && <ProfilePage />}
         </main>
       </div>
     </div>

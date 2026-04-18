@@ -10,9 +10,10 @@ import {
     PieChart,
     RefreshCw,
     Receipt,
+    UserCircle,
 } from "lucide-react"
 
-type Page = "dashboard" | "spending" | "transactions" | "recurring" | "upload" | "tax"
+type Page = "dashboard" | "spending" | "transactions" | "recurring" | "upload" | "tax" | "profile"
 
 interface SidebarProps {
     currentPage: Page
@@ -51,6 +52,11 @@ const navItems: { page: Page; label: string; icon: React.ReactNode }[] = [
         page: "tax",
         label: "Steuerabzüge",
         icon: <Receipt className="size-4" />,
+    },
+    {
+        page: "profile",
+        label: "Profil",
+        icon: <UserCircle className="size-4" />,
     },
 ]
 

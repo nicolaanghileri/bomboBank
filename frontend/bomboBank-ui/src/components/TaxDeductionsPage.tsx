@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import {
     Train,
     HeartPulse,
@@ -26,11 +26,13 @@ interface TaxDeduction {
     category: string
     description: string
     icon: React.ReactNode
-    color: string
+    accent: string      // border-l color class
+    iconBg: string      // icon bg class
+    iconColor: string   // icon text color class
     detectedMerchants: DetectedMerchant[]
     totalDetected: number
-    maxDeductible: number | null // null = unlimited
-    estimatedTaxRate: number // marginal rate used for savings estimate
+    maxDeductible: number | null
+    estimatedTaxRate: number
     note: string
     status: "confirmed" | "review" | "manual"
 }
@@ -40,8 +42,10 @@ const DEDUCTIONS: TaxDeduction[] = [
         id: "transport",
         category: "Berufsfahrtkosten",
         description: "Kosten für den Arbeitsweg (ÖV / Bahn)",
-        icon: <Train className="size-5" />,
-        color: "bg-blue-500",
+        icon: <Train className="size-4" />,
+        accent: "border-l-blue-500",
+        iconBg: "bg-blue-50 dark:bg-blue-950/40",
+        iconColor: "text-blue-600 dark:text-blue-400",
         detectedMerchants: [
             { name: "SBB", amount: 2240 },
             { name: "ZVV", amount: 420 },
@@ -57,8 +61,10 @@ const DEDUCTIONS: TaxDeduction[] = [
         id: "health",
         category: "Krankheits- & Unfallkosten",
         description: "Selbst getragene Gesundheitsausgaben über der Franchise",
-        icon: <HeartPulse className="size-5" />,
-        color: "bg-rose-500",
+        icon: <HeartPulse className="size-4" />,
+        accent: "border-l-rose-500",
+        iconBg: "bg-rose-50 dark:bg-rose-950/40",
+        iconColor: "text-rose-600 dark:text-rose-400",
         detectedMerchants: [
             { name: "Apotheke Zur Rose", amount: 480 },
             { name: "Praxis Dr. Müller", amount: 320 },
@@ -74,12 +80,14 @@ const DEDUCTIONS: TaxDeduction[] = [
         id: "education",
         category: "Berufsbedingte Weiterbildung",
         description: "Kurse, Zertifikate und Fachliteratur",
-        icon: <GraduationCap className="size-5" />,
-        color: "bg-violet-500",
+        icon: <GraduationCap className="size-4" />,
+        accent: "border-l-violet-500",
+        iconBg: "bg-violet-50 dark:bg-violet-950/40",
+        iconColor: "text-violet-600 dark:text-violet-400",
         detectedMerchants: [
             { name: "Udemy", amount: 180 },
             { name: "Coursera", amount: 240 },
-            { name: "Orell Füssli (Fachbücher)", amount: 95 },
+            { name: "Orell Füssli", amount: 95 },
         ],
         totalDetected: 515,
         maxDeductible: 12000,
@@ -91,8 +99,10 @@ const DEDUCTIONS: TaxDeduction[] = [
         id: "donations",
         category: "Spenden",
         description: "Zuwendungen an gemeinnützige Organisationen",
-        icon: <Heart className="size-5" />,
-        color: "bg-pink-500",
+        icon: <Heart className="size-4" />,
+        accent: "border-l-pink-500",
+        iconBg: "bg-pink-50 dark:bg-pink-950/40",
+        iconColor: "text-pink-600 dark:text-pink-400",
         detectedMerchants: [
             { name: "Caritas Schweiz", amount: 200 },
             { name: "SRK / Rotes Kreuz", amount: 150 },
@@ -108,8 +118,10 @@ const DEDUCTIONS: TaxDeduction[] = [
         id: "homeoffice",
         category: "Homeoffice / Arbeitszimmer",
         description: "Anteilige Raumkosten bei regelmässiger Heimarbeit",
-        icon: <Briefcase className="size-5" />,
-        color: "bg-amber-500",
+        icon: <Briefcase className="size-4" />,
+        accent: "border-l-amber-500",
+        iconBg: "bg-amber-50 dark:bg-amber-950/40",
+        iconColor: "text-amber-600 dark:text-amber-400",
         detectedMerchants: [
             { name: "Galaxus (Büromaterial)", amount: 320 },
             { name: "IKEA (Büromöbel)", amount: 480 },
@@ -122,10 +134,12 @@ const DEDUCTIONS: TaxDeduction[] = [
     },
     {
         id: "pillar3a",
-        category: "Säule 3a (Gebundene Vorsorge)",
+        category: "Säule 3a",
         description: "Einzahlungen in die gebundene Selbstvorsorge",
-        icon: <PiggyBank className="size-5" />,
-        color: "bg-emerald-500",
+        icon: <PiggyBank className="size-4" />,
+        accent: "border-l-emerald-500",
+        iconBg: "bg-emerald-50 dark:bg-emerald-950/40",
+        iconColor: "text-emerald-600 dark:text-emerald-400",
         detectedMerchants: [
             { name: "VIAC Vorsorge", amount: 4000 },
             { name: "Finpension", amount: 3056 },
@@ -140,8 +154,10 @@ const DEDUCTIONS: TaxDeduction[] = [
         id: "insurance",
         category: "Versicherungsprämien",
         description: "Krankenkasse, Lebensversicherung & Co.",
-        icon: <ShieldCheck className="size-5" />,
-        color: "bg-sky-500",
+        icon: <ShieldCheck className="size-4" />,
+        accent: "border-l-sky-500",
+        iconBg: "bg-sky-50 dark:bg-sky-950/40",
+        iconColor: "text-sky-600 dark:text-sky-400",
         detectedMerchants: [
             { name: "Helsana", amount: 2640 },
             { name: "CSS Versicherung", amount: 880 },
@@ -167,23 +183,23 @@ function fmt(amount: number) {
 function StatusBadge({ status }: { status: TaxDeduction["status"] }) {
     if (status === "confirmed")
         return (
-            <Badge className="gap-1 bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400">
+            <span className="inline-flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
                 <CheckCircle2 className="size-3" />
                 Automatisch erkannt
-            </Badge>
+            </span>
         )
     if (status === "review")
         return (
-            <Badge className="gap-1 bg-amber-100 text-amber-700 hover:bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400">
+            <span className="inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400">
                 <AlertCircle className="size-3" />
                 Bitte prüfen
-            </Badge>
+            </span>
         )
     return (
-        <Badge className="gap-1 bg-muted text-muted-foreground hover:bg-muted">
+        <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
             <Info className="size-3" />
             Manuell erfassen
-        </Badge>
+        </span>
     )
 }
 
@@ -196,91 +212,85 @@ function DeductionCard({ d }: { d: TaxDeduction }) {
     const savings = Math.round(capped * d.estimatedTaxRate)
 
     return (
-        <Card className="flex flex-col gap-0 overflow-hidden">
-            {/* Coloured top strip */}
-            <div className={`h-1 w-full ${d.color}`} />
+        <Card className={`border-l-[3px] ${d.accent}`}>
+            <CardContent className="flex flex-col gap-5 pt-5">
 
-            <CardHeader className="pb-3">
-                <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <div
-                            className={`flex size-9 shrink-0 items-center justify-center rounded-lg text-white ${d.color}`}
-                        >
-                            {d.icon}
-                        </div>
-                        <div>
-                            <CardTitle className="text-sm font-semibold leading-tight">
-                                {d.category}
-                            </CardTitle>
-                            <p className="mt-0.5 text-xs text-muted-foreground">{d.description}</p>
+                {/* Header */}
+                <div className="flex items-start gap-3">
+                    <div className={`mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md ${d.iconBg} ${d.iconColor}`}>
+                        {d.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold leading-tight">{d.category}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground leading-snug">{d.description}</p>
+                        <div className="mt-1.5">
+                            <StatusBadge status={d.status} />
                         </div>
                     </div>
-                    <StatusBadge status={d.status} />
                 </div>
-            </CardHeader>
 
-            <CardContent className="flex flex-col gap-4">
-                {/* Amounts row */}
+                {/* Divider */}
+                <div className="h-px bg-border" />
+
+                {/* Amounts */}
                 <div className="flex items-end justify-between">
                     <div>
                         <p className="text-xs text-muted-foreground">Erkannte Ausgaben</p>
-                        <p className="text-2xl font-bold tabular-nums">{fmt(d.totalDetected)}</p>
+                        <p className="mt-0.5 text-2xl font-bold tabular-nums tracking-tight">
+                            {fmt(d.totalDetected)}
+                        </p>
                     </div>
                     <div className="text-right">
                         <p className="text-xs text-muted-foreground">Abzugsfähig</p>
-                        <p className="text-lg font-semibold tabular-nums text-emerald-600">
+                        <p className="mt-0.5 text-xl font-semibold tabular-nums text-emerald-600">
                             {fmt(capped)}
                         </p>
                     </div>
                 </div>
 
-                {/* Progress bar */}
+                {/* Progress bar (only when there's a cap) */}
                 {d.maxDeductible !== null && (
-                    <div className="space-y-1">
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>{fmt(d.totalDetected)} genutzt</span>
-                            <span>Max. {fmt(d.maxDeductible)}</span>
-                        </div>
-                        <div className="h-2 overflow-hidden rounded-full bg-muted">
+                    <div className="space-y-1.5">
+                        <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                             <div
-                                className={`h-full rounded-full transition-all ${d.color}`}
+                                className={`h-full rounded-full bg-foreground/20 transition-all`}
                                 style={{ width: `${progress}%` }}
                             />
+                        </div>
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>{Math.round(progress)}% des Maximums genutzt</span>
+                            <span>Max. {fmt(d.maxDeductible)}</span>
                         </div>
                     </div>
                 )}
 
                 {/* Merchants */}
-                <div>
-                    <p className="mb-1.5 text-xs font-medium text-muted-foreground">
-                        Erkannte Händler
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                        {d.detectedMerchants.map((m) => (
-                            <Badge key={m.name} variant="secondary" className="gap-1 text-xs">
-                                {m.name}
-                                <span className="text-muted-foreground">{fmt(m.amount)}</span>
-                            </Badge>
-                        ))}
-                    </div>
+                <div className="flex flex-wrap gap-1.5">
+                    {d.detectedMerchants.map((m) => (
+                        <Badge key={m.name} variant="secondary" className="gap-1.5 text-xs font-normal">
+                            <span className="font-medium">{m.name}</span>
+                            <span className="text-muted-foreground">{fmt(m.amount)}</span>
+                        </Badge>
+                    ))}
                 </div>
 
-                {/* Tax saving chip + note */}
-                <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-3 py-2 dark:bg-emerald-950/30">
-                    <div className="flex items-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-400">
+                {/* Savings row */}
+                <div className="flex items-center justify-between border-t pt-3">
+                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <TrendingDown className="size-3.5" />
-                        <span>Geschätzte Steuerersparnis</span>
-                    </div>
-                    <span className="text-sm font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
+                        Geschätzte Steuerersparnis
+                    </span>
+                    <span className="text-sm font-bold tabular-nums text-emerald-600">
                         ~{fmt(savings)}
                     </span>
                 </div>
 
                 {/* Note */}
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground leading-relaxed">
                     <Info className="mr-1 inline size-3 align-middle" />
                     {d.note}
                 </p>
+
             </CardContent>
         </Card>
     )
@@ -290,7 +300,7 @@ function DeductionCard({ d }: { d: TaxDeduction }) {
 
 export function TaxDeductionsPage() {
     const year = 2025
-    const totalDetected = DEDUCTIONS.reduce(
+    const totalDeductible = DEDUCTIONS.reduce(
         (sum, d) => sum + Math.min(d.totalDetected, d.maxDeductible ?? d.totalDetected),
         0
     )
@@ -298,30 +308,30 @@ export function TaxDeductionsPage() {
         const capped = Math.min(d.totalDetected, d.maxDeductible ?? d.totalDetected)
         return sum + Math.round(capped * d.estimatedTaxRate)
     }, 0)
-
     const confirmed = DEDUCTIONS.filter((d) => d.status === "confirmed").length
-    const toReview = DEDUCTIONS.filter((d) => d.status === "review" || d.status === "manual").length
+    const toReview = DEDUCTIONS.filter((d) => d.status !== "confirmed").length
 
     return (
         <div className="space-y-8 p-8">
-            {/* Disclaimer banner */}
-            <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-950/30">
-                <Info className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
-                <p className="text-sm text-amber-800 dark:text-amber-300">
-                    <span className="font-semibold">Demo-Daten – </span>
-                    Die Beträge basieren auf simulierten Transaktionen und dienen als Illustration.
-                    Konsultiere für eine definitive Steuerberechnung eine Fachperson.
+
+            {/* Disclaimer */}
+            <div className="flex items-start gap-3 rounded-lg border bg-muted/40 px-4 py-3">
+                <Info className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                    <span className="font-medium text-foreground">Demo-Daten – </span>
+                    Die Beträge basieren auf simulierten Transaktionen. Für eine verbindliche
+                    Steuerberechnung konsultiere eine Fachperson.
                 </p>
             </div>
 
-            {/* Summary KPI row */}
+            {/* KPI row */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <Card>
                     <CardContent className="pt-6">
                         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                             Gesamtabzüge {year}
                         </p>
-                        <p className="mt-1 text-3xl font-bold tabular-nums">{fmt(totalDetected)}</p>
+                        <p className="mt-1 text-3xl font-bold tabular-nums">{fmt(totalDeductible)}</p>
                         <p className="mt-1 text-xs text-muted-foreground">
                             aus {DEDUCTIONS.length} Kategorien
                         </p>
@@ -330,41 +340,40 @@ export function TaxDeductionsPage() {
                 <Card>
                     <CardContent className="pt-6">
                         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                            Gesch. Steuerersparnis
+                            Geschätzte Steuerersparnis
                         </p>
                         <p className="mt-1 text-3xl font-bold tabular-nums text-emerald-600">
                             ~{fmt(totalSavings)}
                         </p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                            bei ~25 % Grenzsteuersatz
-                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">bei ~25 % Grenzsteuersatz</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardContent className="pt-6">
                         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                            Status
+                            Prüfstatus
                         </p>
-                        <div className="mt-2 flex items-center gap-3">
-                            <div className="flex items-center gap-1.5">
+                        <div className="mt-2 flex flex-col gap-1">
+                            <div className="flex items-center gap-2">
                                 <CheckCircle2 className="size-4 text-emerald-500" />
-                                <span className="text-sm font-semibold">{confirmed} bestätigt</span>
+                                <span className="text-sm">
+                                    <span className="font-semibold">{confirmed}</span> automatisch erkannt
+                                </span>
                             </div>
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-2">
                                 <AlertCircle className="size-4 text-amber-500" />
-                                <span className="text-sm font-semibold">{toReview} zu prüfen</span>
+                                <span className="text-sm">
+                                    <span className="font-semibold">{toReview}</span> zu prüfen / manuell
+                                </span>
                             </div>
                         </div>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                            Basierend auf deinen Transaktionen
-                        </p>
                     </CardContent>
                 </Card>
             </div>
 
-            {/* Deduction cards grid */}
+            {/* Cards grid */}
             <div>
-                <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                     Erkannte Abzüge
                 </h2>
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
@@ -373,6 +382,7 @@ export function TaxDeductionsPage() {
                     ))}
                 </div>
             </div>
+
         </div>
     )
 }
